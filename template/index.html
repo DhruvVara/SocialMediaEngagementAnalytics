@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Engagement Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            border-radius: 50%;
+            background-color: #4caf50;
+            opacity: 0;
+            animation: blink 1.4s infinite both;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* Animation to make dots blink */
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .scroll::-webkit-.bar-track {
+            -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+            background-color: #F5F5F5;
+        }
+
+        .scroll::-webkit-scrollbar {
+            width: 4px;
+            background-color: #F5F5F5;
+        }
+
+        .scroll::-webkit-scrollbar-thumb {
+            background-color: #4caf50;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans flex justify-center items-center h-[100vh] md:py-2 md:px-3">
+
+    <div class="w-full max-w-3xl h-full flex flex-col md:rounded-lg shadow-xl bg-white overflow-hidden">
+        <div class="bg-green-500 text-white py-4 text-center text-lg sm:text-xl">
+            Social Media Performance Analysis
+        </div>
+
+        <div id="chat-area" class="flex-grow p-[0.5rem] md:p-4 bg-gray-50 overflow-y-auto space-y-4 scroll">
+            <div class="flex justify-start">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-gray-200 text-gray-700 p-3 rounded-lg max-w-[75%]">
+                        Hello! How can I help you today?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center p-4 bg-white border-t border-gray-200">
+
+            <textarea id="user-input"
+                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                style="scrollbar-width: none;" placeholder="Type a message..." rows="1"></textarea>
+            <button onclick="sendMessage()" id="sendBtn"
+                class="ml-2 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">
+                Send
+            </button>
+        </div>
+    </div>
+
+
+</body>
+<script defer>
+    const sendBtn = document.getElementById("user-input");
+    sendBtn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    async function sendMessage() {
+        let inputField = document.getElementById("user-input");
+        let userMessage = inputField.value.trim();
+        inputField.value = "";
+
+        if (userMessage.trim() !== "") {
+            let chatArea = document.getElementById("chat-area");
+
+            let userMessageDiv = document.createElement("div");
+            userMessageDiv.classList.add("flex", "justify-end", "space-x-2");
+
+            let userBubble = document.createElement("div");
+            userBubble.classList.add(
+                "bg-green-500",
+                "text-white",
+                "p-3",
+                "rounded-lg",
+                "max-w-[75%]"
+            );
+            userBubble.innerText = userMessage;
+
+            userMessageDiv.appendChild(userBubble);
+
+            chatArea.appendChild(userMessageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            const loadingDiv = document.createElement("div");
+            loadingDiv.classList.add("flex", "justify-start");
+            loadingDiv.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <div class="flex space-x-2">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        `;
+            chatArea.appendChild(loadingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        inputValue: userMessage,
+                        inputType: 'chat',
+                        outputType: 'chat',
+                        stream: false
+                    })
+                });
+
+                // const data2 = "Here's a summary of the data you provided:\n\n- The dataset covers social media engagement for three post types: Carousel, Static Image, and Reels, from October to December 2024.\n- Static Image posts received the highest number of likes, with a maximum of 291.\n- Reels posts generated the most comments, with a peak of 143.\n- The week of December 8th saw the highest engagement for Static Images.\n- Carousel posts had moderate engagement, with a maximum of 289 likes.\n\nThis data can be used to analyze trends and optimize social media strategies for different post types."
+
+                const data = await response.json();
+                if (response.ok && data.message) {
+                    loadingDiv.remove();
+                    let botMessageDiv = document.createElement("div");
+                    botMessageDiv.classList.add("flex", "justify-start", "space-x-2");
+                    let botBubble = document.createElement("div");
+                    botBubble.classList.add(
+                        "bg-gray-200",
+                        "text-gray-700",
+                        "p-3",
+                        "rounded-lg",
+                        "max-w-[75%]",
+                        "flex",
+                        "flex-wrap",
+                        "break-words"
+                    );
+                    botBubble.innerText = data.message.text;
+                    botMessageDiv.appendChild(botBubble);
+                    chatArea.appendChild(botMessageDiv);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`)
+            }
+        }
+    }
+
+</script>
+
+</html>
+
+<!-- {memory}
+Analyze the data {context} and based on the {question} respond to customer. If the question is not related to dataset then respond with meaningfully. Give the crisp information with out any extra information. If the question is not related to the dataset/ answer is not available then respond meaningfully. Don't provide graph data or table data.
+Don't put any bold/italic text in the response. -->
