@@ -16,7 +16,7 @@ app.use(express.json());
 
 app.post('/process', async (req, res) => {
     let { inputValue, inputType = 'chat', outputType = 'chat', tweaks = {}, stream = false } = req.body;
-    const flowIdOrName = '1ed253a4-ac44-476e-898c-429deaa3e93c';
+    const flowIdOrName = '9f428108-714e-48b4-8fa7-470fa02a1ac1';
     const langflowId = 'd0350cb2-efb4-47b0-b34d-5f21bb3fa289';
 
     try {
